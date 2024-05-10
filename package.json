@@ -6,7 +6,7 @@
   "keywords": [
     "qd-batteryOptimize"
 ],
-  "repository": "",
+  "repository": "https://github.com/China-quanda/qd-batteryOptimize",
   "engines": {
     "HBuilderX": "^4.08"
   },
