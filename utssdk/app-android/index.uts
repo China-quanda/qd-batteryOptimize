@@ -1,0 +1,44 @@
+import Intent from 'android.content.Intent';
+import Context from 'android.content.Context';
+import Build from 'android.os.Build';
+import PowerManager from 'android.os.PowerManager';
+import Service from 'android.app.Service';
+import Activity from 'android.app.Activity';
+import Settings from 'android.provider.Settings';
+import Uri from 'android.net.Uri';
+
+
+const REQUEST_CODE : Int = 21798;
+
+export const checkBatteryOptimizeStatus = () : Promise<boolean> => {
+	return new Promise((resolve) => {
+		const context = UTSAndroid.getAppContext() as Context;
+		const currentActivity = UTSAndroid.getUniActivity() as Activity;
+		if (context == null || currentActivity == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+			resolve(false);
+			return;
+		}
+
+		const powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager;
+		resolve(powerManager.isIgnoringBatteryOptimizations(currentActivity.getPackageName()));
+	});
+}
+
+export const requestIgnoreBatteryOptimization = () : Promise<boolean> => {
+	return new Promise((resolve) => {
+		UTSAndroid.onAppActivityResult((requestCode : Int, resultCode : Int, data ?: Intent) => {
+			if (requestCode === REQUEST_CODE) {
+				checkBatteryOptimizeStatus().then((res : boolean) => {
+					resolve(res);
+				});
+			}
+		});
+
+		const currentActivity = UTSAndroid.getUniActivity() as Activity;
+		if (currentActivity != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			const intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+			intent.setData(Uri.parse("package:" + currentActivity.getPackageName()));
+			currentActivity.startActivityForResult(intent, REQUEST_CODE);
+		}
+	});
+}
